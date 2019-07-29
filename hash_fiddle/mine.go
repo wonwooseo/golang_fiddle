@@ -1,15 +1,23 @@
 package main
 
 import (
-	"fmt"
+	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"flag"
+	"fmt"
 	"strings"
 )
 
 func main() {
-	genesis := flag.String("i", "The quick brown fox jumps over the lazy dog", "Genesis input")
-	target := flag.Int("r", 8, "Target difficulty")
+	b := make([]byte, 10)
+	_, err := rand.Read(b)
+	if err != nil {
+		fmt.Println("Aborted", err)
+		return
+	}
+	genesis := flag.String("i", base64.StdEncoding.EncodeToString(b), "Genesis input")
+	target := flag.Int("r", 6, "Target difficulty")
 	flag.Parse()
 	mine(1, *target, *genesis)
 }
@@ -22,11 +30,11 @@ func mine(difficulty int, target int, input string) {
 	raw := sha256.Sum256([]byte(fmt.Sprintf("%d%s", nonce, input)))
 	h := fmt.Sprintf("%x", raw)
 	for h[0:difficulty] != strings.Repeat("0", difficulty) {
-		nonce += 1
+		nonce++
 		raw = sha256.Sum256([]byte(fmt.Sprintf("%d%s", nonce, input)))
 		h = fmt.Sprintf("%x", raw)
 	}
 	fmt.Printf("Found answer for difficulty %d\n", difficulty)
 	fmt.Printf(" input=%s\n nonce=%d\n output=%s\n\n", input, nonce, h)
-	mine(difficulty + 1, target, h)
+	mine(difficulty+1, target, h)
 }
